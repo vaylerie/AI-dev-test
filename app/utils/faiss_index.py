@@ -14,7 +14,7 @@ def add_embedding(embedding: np.ndarray):
     index.add(embedding)
     save_index()
 
-def search_embedding(query_embedding: np.ndarray, top_k: int = 1):
+def search_embedding(query_embedding: np.ndarray, top_k: int = 3):
     distances, indices = index.search(query_embedding, top_k)
     return distances[0], indices[0]
 
