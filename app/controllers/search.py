@@ -16,27 +16,33 @@ class SearchImage(Resource):
         if 'search_image' not in request.files:
             return {"data": "No image uploaded"}, 400
 
-        file = request.files['search_image']
-        filename = f"temp_{uuid.uuid4().hex}.jpg"
-        filepath = os.path.join("static", "temp", filename)
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        file.save(filepath)
+        try:
+            file = request.files['search_image']
+            filename = f"temp_{uuid.uuid4().hex}.jpg"
 
-        embedding = get_image_embedding(filepath)
-        distances, indices = search_embedding(embedding, top_k=3)
+            filepath = os.path.join("static", "temp", filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            file.save(filepath)
 
-        images = Image.query.order_by(Image.id).all()
+            embedding = get_image_embedding(filepath)
+            distances, indices = search_embedding(embedding, top_k=3)
 
-        results = []
-        for i, idx in enumerate(indices):
-            if 0 <= idx < len(images):
-                image = images[idx]
-                confidence = round(float(1 - distances[i]), 4)
-                results.append({
-                    "id": image.id,
-                    "filename": image.filename,
-                    "confidence": confidence
-                })
+            images = Image.query.order_by(Image.id).all()
 
-        os.remove(filepath)
-        return ({"data": results}), 200
+            results = []
+            for i, idx in enumerate(indices):
+                if 0 <= idx < len(images):
+                    image = images[idx]
+                    confidence = round(float(1 - distances[i]), 4)
+                    results.append({
+                        "id": image.id,
+                        "filename": image.filename,
+                        "confidence": confidence
+                    })
+
+            os.remove(filepath)
+            return ({"data": results}), 200
+
+        except Exception as e:
+            logging.error(f"Error occurred: {e}")
+            return {"data": "Failed to process"}, 400

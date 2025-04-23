@@ -18,22 +18,25 @@ class UploadImage(Resource):
         if file.filename == '':
             return {"data": "Failed to upload image"}, 400
 
-        try:
-            filepath = os.path.join('static/image/', file.filename)
-            file.save(filepath)
+        if file.filename.lower().endswith(('.png', '.jpg')):
+            try:
+                filepath = os.path.join('static/image/', file.filename)
+                file.save(filepath)
 
-            embedding = get_image_embedding(filepath)
-            add_embedding(embedding)
+                embedding = get_image_embedding(filepath)
+                add_embedding(embedding)
 
-            upload_image = Image(filename = file.filename,
-                                 filepath = filepath)
-            db.session.add(upload_image)
-            db.session.commit()
+                upload_image = Image(filename = file.filename,
+                                     filepath = filepath)
+                db.session.add(upload_image)
+                db.session.commit()
 
-            return {"data":
-                        {"filepath": str(filepath)}
-                    }, 200
+                return {"data":
+                            {"filepath": str(filepath)}
+                        }, 200
 
-        except Exception as e:
-            logging.error(f"Error occurred: {e}")
-            return {"data": "Failed to upload image"}, 400
+            except Exception as e:
+                logging.error(f"Error occurred: {e}")
+                return {"data": "Failed to upload image"}, 400
+        else:
+            return {"data": "Failed to upload image. Please upload image with .png or .jpg extensions"}, 400
